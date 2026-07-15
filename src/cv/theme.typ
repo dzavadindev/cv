@@ -1,0 +1,43 @@
+#let cv_theme = (
+  colors: (
+    main: rgb("#E40019"),
+    sidebar_background: luma(75%),
+    header_text: white,
+    body_text: black,
+  ),
+  fonts: (
+    heading: "Frank Ruhl Libre",
+    sidebar: "Hind Vadodara",
+    body: "Rubik",
+    icons_solid: "Font Awesome 7 Free Solid",
+    icons_brands: "Font Awesome 7 Brands",
+  ),
+  sizes: (
+    body: 10pt,
+    header_name: 4.5em,
+    header_subtitle: 0.3em,
+    avatar: 3cm,
+    sidebar_heading: 1.45em,
+    section_heading: 1.6em,
+    contact_icon: 1em,
+  ),
+  spacing: (
+    page_margin: 20pt,
+    column_inset: 10pt,
+    sidebar_title_gap: 0.25em,
+    sidebar_title_offset: -0.35em,
+    sidebar_body_gap: 0.5em,
+    block_gap: 0.65fr,
+    section_gap: 0.4em,
+    section_separator_gap: 0.8em,
+    entry_gap: 0.45em,
+    entry_component_gap: 0.22em,
+    contact_gap: 0.3em,
+    paragraph_gap: 0.8em,
+    header_gap: 0.25em,
+  ),
+  layout: (
+    sidebar_ratio: 30%,
+    bleed_fix: 1pt,
+  ),
+)
