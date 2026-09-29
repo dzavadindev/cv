@@ -1,5 +1,4 @@
 #import "src/cv/data.typ": general
 #import "src/cv/template.typ": render_cv
 
-// Keep `cv.typ` as the familiar default entry point.
 #render_cv(general)

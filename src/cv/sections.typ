@@ -1,132 +1,109 @@
-#import "icons.typ": icon
-
-// Sidebar blocks share a consistent title treatment and spacing.
-#let sidebar_title(theme, title) = {
-  set par(spacing: theme.spacing.sidebar_title_gap)
-  text(font: theme.fonts.heading, size: theme.sizes.sidebar_heading, weight: 700)[~#title]
-  rect(radius: 100%, width: 100%, height: 1.5pt, fill: theme.colors.body_text)
-  v(theme.spacing.sidebar_title_offset)
-}
-
-// Wrap a sidebar section with its title and body font.
-#let sidebar_section(theme, title, body) = {
-  set text(font: theme.fonts.sidebar)
-  sidebar_title(theme, title)
-  v(theme.spacing.sidebar_body_gap)
-  body
-}
-
-// Profile text is just a sequence of paragraphs with justified layout.
-#let paragraph_section(theme, title, paragraphs) = {
-  sidebar_section(theme, title, {
-    set par(justify: true, spacing: theme.spacing.paragraph_gap)
-
-    for paragraph in paragraphs {
-      paragraph
-      parbreak()
-    }
-  })
-}
-
-// Contact rows optionally become links when a target is provided.
-#let contact_section(theme, items, title: "Contact") = {
-  sidebar_section(theme, title, {
-    set par(spacing: theme.spacing.contact_gap)
-
-    for item in items {
-      let row = [
-        #icon(theme, item.icon, family: item.icon_family, fill: theme.colors.main)
-        #h(0.5em)
-        #item.text
-      ]
-
-      if item.link != none {
-        link(item.link, row)
-      } else {
-        row
-      }
-
-      parbreak()
-    }
-  })
-}
-
-// Languages are rendered as simple label + level lines.
-#let language_section(theme, items, title: "Languages") = {
-  sidebar_section(theme, title, {
-    for item in items {
-      item.name + " (" + item.level + ")"
-      parbreak()
-    }
-  })
-}
-
-// Skill groups are compact summaries: category name plus comma-separated items.
-#let skill_section(theme, groups, title: "Skills & Knowledge") = {
-  sidebar_section(theme, title, {
-    for group in groups {
-      strong(group.title + ": ")
-      group.items.join(", ")
-      parbreak()
-      parbreak()
-    }
-  })
-}
-
-// Main-column section heading.
 #let section_heading(theme, title) = {
-  set par(spacing: theme.spacing.entry_gap)
-  text(font: theme.fonts.heading, size: theme.sizes.section_heading, weight: 800)[~#title]
+  set text(size: theme.sizes.section_heading, weight: 700)
+  block(below: theme.spacing.heading_below)[#title]
 }
 
-// Thin visual divider between major resume sections.
-#let section_separator(theme) = {
-  v(theme.spacing.section_separator_gap)
-  rect(width: 100%, height: 0.8pt, fill: luma(70%))
-  v(theme.spacing.section_separator_gap)
+#let sidebar_heading(theme, title) = {
+  set text(size: theme.sizes.sidebar_heading, weight: 700)
+  block(below: 6pt)[#upper(title)]
 }
 
-// Typst list() wants content items, so each bullet is wrapped into a content block.
-#let bullet_list(items) = list(..items.map(item => [#item]))
+#let linked_text(url, body) = link(url, underline(
+  offset: 1.5pt,
+  stroke: 0.5pt,
+  evade: false,
+  body,
+))
 
-// One resume entry: title, date rail, subtitle, and optional bullet list.
-#let resume_entry(theme, item) = {
-  set par(spacing: theme.spacing.entry_gap)
+#let skills_section(theme, skills, limited_skills) = {
+  sidebar_heading(theme, "Skills")
+  set par(leading: theme.spacing.body_leading)
+  skills.map(skill => if limited_skills.contains(skill) {
+    emph(skill)
+  } else {
+    skill
+  }).join(", ")
+  if limited_skills.len() > 0 {
+    block(above: 4pt)[
+      #set text(size: theme.sizes.note, style: "italic", fill: theme.colors.muted)
+      Italic indicates introductory experience.
+    ]
+  }
+}
+
+#let language_meter(theme, rating) = {
   grid(
-    columns: (auto, 1fr, auto),
-    row-gutter: theme.spacing.entry_gap,
-    column-gutter: 0.55em,
-    [
-      #set text(size: 1em, weight: 700)
-      #item.title
-    ],
-    grid.cell(rowspan: 2)[
-      #box(width: 100%)[
-        #rect(width: 100%, height: 0.65pt, fill: luma(72%))
-      ]
-    ],
-    grid.cell(rowspan: 2)[
-      *#item.date*
-    ],
-    grid.cell()[#emph()[#item.subtitle]],
-    [],
+    columns: (1fr, 1fr, 1fr, 1fr, 1fr),
+    gutter: 5pt,
+    ..range(5).map(i => rect(
+      width: 100%,
+      height: 3pt,
+      fill: if i < rating { theme.colors.text } else { theme.colors.meter_empty },
+    )),
   )
+}
 
-  v(theme.spacing.entry_component_gap)
-
-  if item.bullets.len() > 0 {
-    bullet_list(item.bullets)
-    v(theme.spacing.entry_component_gap)
+#let languages_section(theme, languages) = {
+  sidebar_heading(theme, "Languages")
+  for language in languages {
+    block(below: 3pt)[#language.name (#language.level)]
+    language_meter(theme, language.rating)
+    v(7pt)
   }
 }
 
-// A section is just a heading followed by repeated resume entries.
-#let entry_section(theme, title, items) = {
-  section_heading(theme, title)
-  v(theme.spacing.entry_component_gap)
+#let experience_entry(theme, entry) = {
+  set par(leading: theme.spacing.compact_leading)
+  block(below: 4pt)[
+    #set text(weight: 700)
+    #entry.role, #entry.company, #entry.location
+  ]
+  block(below: 4pt)[#entry.date]
+  set list(indent: 16pt, body-indent: 4pt, spacing: 3pt)
+  list(..entry.bullets)
+}
 
-  for item in items {
-    resume_entry(theme, item)
-    v(theme.spacing.section_gap)
+#let experience_section(theme, entries) = {
+  section_heading(theme, "Work Experience")
+  for (index, entry) in entries.enumerate() {
+    experience_entry(theme, entry)
+    if index < entries.len() - 1 { v(theme.spacing.entry_gap) }
   }
+}
+
+#let project_entry(theme, project) = {
+  let project_title = if project.url == none {
+    project.name
+  } else {
+    linked_text(project.url, project.name)
+  }
+
+  set par(leading: theme.spacing.compact_leading)
+  block(below: 3pt)[
+    #set text(weight: 700)
+    #project_title
+  ]
+  block(below: 3pt)[
+    #set text(size: theme.sizes.meta, style: "italic", fill: theme.colors.muted)
+    #project.meta
+  ]
+  project.description
+}
+
+#let projects_section(theme, projects) = {
+  section_heading(theme, "Projects")
+  for (index, project) in projects.enumerate() {
+    project_entry(theme, project)
+    if index < projects.len() - 1 { v(theme.spacing.project_gap) }
+  }
+}
+
+#let education_section(theme, education) = {
+  section_heading(theme, "Education")
+  set par(leading: theme.spacing.compact_leading)
+  block(below: 4pt)[
+    #set text(weight: 700)
+    #education.school, #education.degree, #education.location
+  ]
+  education.date
 }
